@@ -16,17 +16,17 @@ If the input does not make sense, stop the process.
 const template = `Given an input question, first create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.  
 Use the following format:  
   
-Question: "Question here"  
-SQLQuery: "SQL Query to run"  
-SQLResult: "Result of the SQLQuery"  
-Answer: "Final answer here"  
+Question: "Question here"
+SQLQuery: "SQL Query to run"
+SQLResult: "Result of the SQLQuery"
+Answer: "Final answer here"
   
 Only use the following tables:  
   
-{table_info}  
-  
-If someone asks for the table foobar, they really mean the employee table.  
-  
+{table_info}
+
+If the result only has one record, include the link in the response.
+
 Question: {input}`;
 
 // const filePath = path.join(__dirname, 'Chinook_Sqlite.sqlite');

@@ -31,13 +31,15 @@ export function ChatWindow(props: {
   const ingestForm = showIngestForm && <UploadDocumentsForm></UploadDocumentsForm>;
   const intemediateStepsToggle = showIntermediateStepsToggle && (
     <div>
-      <input type="checkbox" id="show_intermediate_steps" name="show_intermediate_steps" checked={showIntermediateSteps} onChange={(e) => setShowIntermediateSteps(e.target.checked)}></input>
+      <input type="checkbox" id="show_intermediate_steps" name="show_intermediate_steps" checked={showIntermediateSteps} onChange={(e) => {
+        setShowIntermediateSteps(e.target.checked);
+      }}></input>
       <label htmlFor="show_intermediate_steps"> Show intermediate steps</label>
     </div>
   );
 
   const [sourcesForMessages, setSourcesForMessages] = useState<Record<string, any>>({});
-  const [SqlMessages, setSqlMessages] = useState<any>([]);
+  // const [SqlMessages, setSqlMessages] = useState<any>([]);
 
   const { messages, input, setInput, handleInputChange, handleSubmit, isLoading: chatEndpointIsLoading, setMessages } =
     useChat({
@@ -69,8 +71,34 @@ export function ChatWindow(props: {
       return;
     }
     if (!showIntermediateSteps) {
-      handleSubmit(e);
     // Some extra work to show intermediate steps properly
+      setIntermediateStepsLoading(true);
+      setInput("");
+      const messagesWithUserReply = messages.concat({ id: messages.length.toString(), content: input, role: "user" });
+      setMessages(messagesWithUserReply);
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: JSON.stringify({
+          messages: messagesWithUserReply,
+          show_intermediate_steps: true
+        })
+      });
+      
+      const json = await response.json();
+      setIntermediateStepsLoading(false);
+      if (response.status === 200) {
+        const newMessages = messagesWithUserReply;
+        setMessages([...newMessages, { id: (newMessages.length).toString(), content: json.output, role: "assistant" }]);
+
+      } else {
+        if (json.error) {
+          toast(json.error, {
+            theme: "dark"
+          });
+          throw new Error(json.error);
+        }
+      }
+
     } else {
       setIntermediateStepsLoading(true);
       setInput("");
@@ -86,27 +114,23 @@ export function ChatWindow(props: {
       const json = await response.json();
       setIntermediateStepsLoading(false);
       if (response.status === 200) {
-        console.log(json)
-        // Represent intermediate steps as system messages for display purposes
-        const intermediateStepMessages = (json.intermediate_steps ?? []).map((intermediateStep: AgentStep, i: number) => {
-          return {id: (messagesWithUserReply.length + i).toString(), content: JSON.stringify(intermediateStep), role: "system"};
-        });
-        
+        console.log(json) 
+        const sqlQueryMessages = (json.sql ?? []).map((query: any, i: number) => {
+          return {id: (messagesWithUserReply.length + i).toString(), content: query, role: "system"};
+        });        
         const newMessages = messagesWithUserReply;
-        for (const message of intermediateStepMessages) {
+        for (const message of sqlQueryMessages) {
           newMessages.push(message);
           setMessages([...newMessages]);
           await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
         }
-        setMessages([...newMessages, { id: (newMessages.length + intermediateStepMessages.length).toString(), content: json.output, role: "assistant" }]);
-        const sql_query = (json.sql ?? []).map((query: any, i: number) => {
-          return {id: (SqlMessages.length + i).toString(), content: query, role: "system"};
-        });
-        for (const message of sql_query) {
-          SqlMessages?.push(message);
-          setSqlMessages([...SqlMessages]);
-          await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-        }
+        setMessages([...newMessages, { id: (sqlQueryMessages.length).toString(), content: json.output, role: "assistant" }]);
+
+        // for (const message of sql_query) {
+        //   SqlMessages?.push(message);
+        //   setSqlMessages([...SqlMessages]);
+        //   await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+        // }
       } else {
         if (json.error) {
           toast(json.error, {
@@ -131,12 +155,22 @@ export function ChatWindow(props: {
             .reverse()
             .map((m, i) => {
               const sourceKey = (messages.length - 1 - i).toString();
-              return (m.role === "system" ? <IntermediateStep key={m.id} message={m}></IntermediateStep> : <ChatMessageBubble key={m.id} message={m} aiEmoji={emoji} sources={sourcesForMessages[sourceKey]}></ChatMessageBubble>)
+              return (m.role === "system" ? <SqlStep key={m.id} message={m}></SqlStep> : <ChatMessageBubble key={m.id} message={m} aiEmoji={emoji} sources={sourcesForMessages[sourceKey]}></ChatMessageBubble>)
             })
         ) : (
           ""
         )}
-        {SqlMessages.length > 0 ? (
+        {/* {messages.length > 0 ? (
+          [...messages]
+            .reverse()
+            .map((m, i) => {
+              const sourceKey = (messages.length - 1 - i).toString();
+              return (m.role === "system" ? <IntermediateStep key={m.id} message={m}></IntermediateStep> : <ChatMessageBubble key={m.id} message={m} aiEmoji={emoji} sources={sourcesForMessages[sourceKey]}></ChatMessageBubble>)
+            })
+        ) : (
+          ""
+        )} */}
+        {/* {SqlMessages.length > 0 ? (
           [...SqlMessages]
             // .reverse()
             .map((m, i) => {
@@ -145,7 +179,7 @@ export function ChatWindow(props: {
             })
         ) : (
           ""
-        )}
+        )} */}
       </div>
 
       {messages.length === 0 && ingestForm}

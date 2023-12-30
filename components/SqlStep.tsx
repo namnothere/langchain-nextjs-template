@@ -16,7 +16,7 @@ export function SqlStep(props: { message: any }) {
       <div className={`overflow-hidden max-h-[0px] transition-[max-height] ease-in-out ${expanded ? "max-h-[360px]" : ""}`}>
         <div className={`bg-slate-600 rounded p-4 mt-1 max-w-0 ${expanded ? "max-w-full" : "transition-[max-width] delay-100"}`}>
           <code className={`opacity-0 max-h-[100px] overflow-auto transition ease-in-out delay-150 ${expanded ? "opacity-100" : ""}`}>
-            Tool Input:
+            Tool Action:
             <br></br>
             <br></br>
             {JSON.stringify(props.message.content)}
