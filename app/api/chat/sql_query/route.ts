@@ -13,7 +13,7 @@ const PROMPT_TEMPLATE = `Translate the following question/order to SQL and \
 execute it. Return the result as natural language summarize. \
 If the input does not make sense, stop the process.
 `
-const template = `Given an input question, first create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.  
+const template = `Given an input question, first create a syntactically correct {dialect} query to run while exclude null values, then look at the results of the query and return the answer.
 Use the following format:  
   
 Question: "Question here"
@@ -29,13 +29,13 @@ If the result only has one record, include the link in the response.
 
 Question: {input}`;
 
-// const filePath = path.join(__dirname, 'Chinook_Sqlite.sqlite');
-const filePath = path.join(__dirname, 'real-estate.db');
-fs.readFileSync(filePath);
+const filePath = path.join(process.cwd(), "shared", 'real-estate.db');
+console.log(filePath)
+fs.readFileSync(path.join(process.cwd(), "shared", 'real-estate.db'));
 
 const datasource = new DataSource({
     type: "sqlite",
-    database: filePath,
+    database: path.join(process.cwd(), "shared" ,'real-estate.db'),
 });
 
 var executor: AgentExecutor;
