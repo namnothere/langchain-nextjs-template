@@ -1,8 +1,7 @@
 "use client";
 
 import { ChatWindow } from "@/components/ChatWindow";
-import path from "path";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 const template = `Given an input question, first create a syntactically correct {dialect} query to run while exclude null values, then look at the results of the query and return the answer.
@@ -24,12 +23,39 @@ Question: {input}`;
 
 export default function AgentsPage() {
   const [prompt, setPrompt] = useState("");
-  const [currentPrompt, setCurrentPrompt] = useState(template);
+  const [currentPrompt, setCurrentPrompt] = useState("");
   const endpoint = "api/chat/sql_query";
 
   function handleInputChange(e: any) {
     setPrompt(e.target.value);
   }
+
+  async function getPrompt() {
+    const response = await fetch(endpoint, {
+      method: "GET",
+    });
+    const json = await response.json();
+      if (response.status === 200) {
+        setCurrentPrompt(json.prompt);
+        setPrompt("");
+      } else {
+        if (json.error) {
+          toast(json.error, {
+            theme: "dark"
+          });
+          throw new Error(json.error);
+        }
+      }
+  }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await getPrompt();
+    };
+    fetchData().catch((e) => {
+      console.error("error while fetch data ", e);
+    })
+  }, []);
 
   async function updatePrompt(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

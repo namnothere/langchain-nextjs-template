@@ -29,6 +29,8 @@ If the result only has one record, include the link in the response.
 
 Question: {input}`;
 
+let currentPrompt: string;
+
 const filePath = path.join(process.cwd(), "shared", 'real-estate.db');
 console.log(filePath)
 fs.readFileSync(path.join(process.cwd(), "shared", 'real-estate.db'));
@@ -50,8 +52,10 @@ async function init(newPrompt: string) {
     let prompt;
     if (newPrompt != "" && newPrompt.length > 0) {
         prompt = PromptTemplate.fromTemplate(newPrompt)
+        currentPrompt = newPrompt;
     } else {
         prompt = PromptTemplate.fromTemplate(template);
+        currentPrompt = template;
     }
 
     dbChain = new SqlDatabaseChain({
@@ -65,6 +69,17 @@ async function init(newPrompt: string) {
     console.log("done create new agent");
 }
 
+export async function GET(req: NextRequest) {
+    if (!initLoad) await init("");
+    return NextResponse.json(
+        { 
+            result: "ok",
+            prompt: currentPrompt,
+            text: "oke"
+        },
+        { status: 200 },
+      );
+}
 
 export async function POST(req: NextRequest) {
 
