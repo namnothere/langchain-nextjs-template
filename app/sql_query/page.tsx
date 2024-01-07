@@ -1,10 +1,19 @@
-import { ChatWindow } from "@/components/ChatWindow";
+'use client';
 
+import { ChatWindow } from "@/components/ChatWindow";
+import { ChangeEventHandler, useState } from "react";
 export default function AgentsPage() {
+
+  const [prompt, setPrompt] = useState("");
+
+  function handleInputChange(e: any) {
+    setPrompt(e.target.value);
+  }
+
   const InfoCard = (
     <div className="p-4 md:p-8 rounded bg-[#25252d] w-full max-h-[85%] overflow-hidden">
       <h1 className="text-3xl md:text-4xl mb-4">
-        ▲ Next.js + LangChain.js Natural Language to SQL 🦜🔗
+        ▲ Next.js + LangChain.js Natural Language to 🦜🔗
       </h1>
       <ul>
         <li className="text-l">
@@ -26,6 +35,11 @@ export default function AgentsPage() {
           </span>
         </li>
       </ul>
+      <input
+            className="grow mr-8 p-4 rounded"
+            value={prompt}
+            onChange={handleInputChange}
+      />
     </div>
   );
   return (

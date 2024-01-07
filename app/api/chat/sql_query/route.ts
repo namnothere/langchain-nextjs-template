@@ -41,13 +41,18 @@ const datasource = new DataSource({
 var executor: AgentExecutor;
 var dbChain: SqlDatabaseChain;
 var initLoad = false;
-async function init() {
+async function init(newPrompt: string) {
     const db = await SqlDatabase.fromDataSourceParams({
         appDataSource: datasource,
     });
     const model = new OpenAI({ temperature: 0 });
     const toolkit = new SqlToolkit(db, model);
-    const prompt = PromptTemplate.fromTemplate(template);
+    let prompt;
+    if (newPrompt != "" && newPrompt.length > 0) {
+        prompt = PromptTemplate.fromTemplate(newPrompt)
+    } else {
+        prompt = PromptTemplate.fromTemplate(template);
+    }
 
     dbChain = new SqlDatabaseChain({
         llm: model,
@@ -57,15 +62,28 @@ async function init() {
     })
     executor = createSqlAgent(model, toolkit);
     initLoad = true;
+    console.log("done create new agent");
 }
 
 
 export async function POST(req: NextRequest) {
 
-    if (!initLoad) await init();
+    if (!initLoad) await init("");
 
     const body = await req.json();
     const messages = body.messages ?? [];
+    const prompt = body.prompt ?? "";
+
+    if (prompt != "" && prompt.length > 0) {
+        await init(prompt);
+        return NextResponse.json(
+            { 
+                result: "ok"
+            },
+            { status: 200 },
+          );
+    }
+
     const currentMessageContent = messages[messages.length - 1].content;
 
     console.log(`Executing with input ${currentMessageContent}`);
